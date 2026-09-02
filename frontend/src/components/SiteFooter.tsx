@@ -17,10 +17,9 @@ const SiteFooter: React.FC = () => {
           className="text-mint-700 underline hover:text-mint-900">
           GitHub · 欢迎 ⭐ Star
         </a>
-        <span> · 数据本地保存</span>
       </div>
       <div className="mt-1 text-mint-700/50">
-        v1.0.0 · Made with 💚
+        v1.0.0
       </div>
     </footer>
   )

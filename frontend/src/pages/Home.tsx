@@ -6,7 +6,7 @@ type Tool = {
   icon: React.ReactNode
   name: string
   desc: string
-  color: string // bg gradient tailwind class
+  color: string
   badge?: string
 }
 
@@ -38,56 +38,22 @@ const officeTools: Tool[] = [
     ),
   },
   {
-    to: '#',
-    name: 'JSON 格式化',
-    desc: '即将上线 · 敬请期待',
-    color: 'from-slate-400 to-slate-500',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
-        <path d="M17 11a4 4 0 0 1 0 8h-1M7 13a4 4 0 0 1 0-8h1" />
-      </svg>
-    ),
-  },
-  {
-    to: '#',
-    name: '时间戳转换',
-    desc: '即将上线 · 敬请期待',
-    color: 'from-slate-400 to-slate-500',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </svg>
-    ),
-  },
-  {
-    to: '#',
+    to: '/workdays',
     name: '工作日计算',
-    desc: '即将上线 · 敬请期待',
-    color: 'from-slate-400 to-slate-500',
+    desc: '算区间工作日 / N 个工作日后是哪天',
+    color: 'from-indigo-400 to-mint-500',
+    badge: '🆕 新上',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M3 10h18M8 3v4M16 3v4" />
+        <path d="M8 14l2 2 4-4" />
       </svg>
     ),
   },
 ]
 
 const funTools: Tool[] = [
-  {
-    to: '/picker',
-    name: '纠结人神器',
-    desc: '吃啥？选啥？一键帮你决定',
-    color: 'from-amber-400 to-pink-500',
-    badge: '🎯 首发',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
-        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-        <circle cx="12" cy="12" r="3.5" />
-      </svg>
-    ),
-  },
   {
     to: '/verse',
     name: '治愈金句',
@@ -103,9 +69,22 @@ const funTools: Tool[] = [
     ),
   },
   {
+    to: '/picker',
+    name: '纠结人神器',
+    desc: '吃啥？选啥？一键帮你决定',
+    color: 'from-amber-400 to-pink-500',
+    badge: '🎯 首发',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
+        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+        <circle cx="12" cy="12" r="3.5" />
+      </svg>
+    ),
+  },
+  {
     to: '/music',
     name: '音乐小站',
-    desc: '钢琴曲 / 白噪音 · 播放器 UI',
+    desc: '钢琴曲 / 白噪音 · 真实可播放',
     color: 'from-cyan-400 to-mint-500',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
@@ -116,21 +95,11 @@ const funTools: Tool[] = [
     ),
   },
   {
-    to: '#',
-    name: '随机抽签',
-    desc: '即将上线 · 敬请期待',
-    color: 'from-slate-400 to-slate-500',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
-        <path d="M9 3h6M8 3v4M16 3v4M5 7h14l-1.5 13a2 2 0 0 1-2 1.8h-7A2 2 0 0 1 6.5 20L5 7z" />
-      </svg>
-    ),
-  },
-  {
-    to: '#',
+    to: '/quiz',
     name: '趣味小测试',
-    desc: '即将上线 · 敬请期待',
-    color: 'from-slate-400 to-slate-500',
+    desc: '颜色性格 / 笑话 / 人生锦囊',
+    color: 'from-fuchsia-400 to-indigo-500',
+    badge: '🆕 新上',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-white">
         <circle cx="12" cy="12" r="9" />
@@ -185,7 +154,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="animate-fade-up">
-      {/* Hero 问候 */}
+      {/* Hero */}
       <section className="mb-8">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -194,8 +163,7 @@ const Home: React.FC = () => {
               薄荷小站
             </h1>
             <p className="mt-2 text-sm text-mint-800/80 max-w-md">
-              办公工具箱 + 休闲小玩意儿，一个页面搞定你的摸鱼与专注。<br className="hidden sm:block"/>
-              所有数据存在你的浏览器，不必注册，放心使用。
+              办公工具箱 + 休闲小玩意儿，一个页面搞定你的摸鱼与专注。
             </p>
           </div>
           <div className="hidden sm:flex w-20 h-20 rounded-3xl bg-gradient-to-br from-mint-400 to-mint-600 shadow-soft items-center justify-center shrink-0">

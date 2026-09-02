@@ -5,6 +5,8 @@ import Todo from './pages/Todo'
 import Picker from './pages/Picker'
 import Verse from './pages/Verse'
 import Music from './pages/Music'
+import Workdays from './pages/Workdays'
+import Quiz from './pages/Quiz'
 import PageHeader from './components/PageHeader'
 import SiteFooter from './components/SiteFooter'
 
@@ -27,6 +29,8 @@ function App() {
             <Route path="/picker" element={<Picker />} />
             <Route path="/verse" element={<Verse />} />
             <Route path="/music" element={<Music />} />
+            <Route path="/workdays" element={<Workdays />} />
+            <Route path="/quiz" element={<Quiz />} />
           </Routes>
         </main>
 

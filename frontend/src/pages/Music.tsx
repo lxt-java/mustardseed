@@ -24,24 +24,27 @@ const CATS: { key: Track['category']; label: string; icon: string; hint: string;
   {
     key: 'piano', label: '钢琴曲', icon: '🎹', hint: '平静思绪 · 灵感写作',
     default: [
-      { title: '卡农 (Canon in D)', artist: 'Pachelbel', category: 'piano', coverColor: '0', duration: 300 },
-      { title: 'River Flows in You', artist: 'Yiruma', category: 'piano', coverColor: '1', duration: 210 },
-      { title: '梦中的婚礼', artist: 'Richard Clayderman', category: 'piano', coverColor: '2', duration: 198 },
-      { title: '天空之城', artist: '久石让', category: 'piano', coverColor: '3', duration: 245 },
-      { title: '月光 (Beethoven)', artist: 'Beethoven', category: 'piano', coverColor: '0', duration: 360 },
-      { title: '夜的钢琴曲五', artist: '石进', category: 'piano', coverColor: '1', duration: 225 },
+      { title: '卡农 D 大调 (Pachelbel)', artist: 'Pachelbel · 钢琴合成', category: 'piano', coverColor: '0',
+        url: '/audio/piano_canon_real.wav' },
+      { title: '致爱丽丝 (Für Elise)', artist: 'Beethoven · 钢琴合成', category: 'piano', coverColor: '1',
+        url: '/audio/piano_fur_elise.wav' },
+      { title: '月光奏鸣曲 第一乐章', artist: 'Beethoven · 钢琴合成', category: 'piano', coverColor: '2',
+        url: '/audio/piano_moonlight.wav' },
+      { title: '夜的钢琴曲五', artist: '石进（待添加）', category: 'piano', coverColor: '1', duration: 225 },
     ],
   },
   {
     key: 'whitenoise', label: '白噪音', icon: '🌧️', hint: '助眠 · 办公专注',
     default: [
-      { title: '雨声', artist: '自然白噪音', category: 'whitenoise', coverColor: '1', duration: 600 },
-      { title: '森林鸟鸣', artist: '自然白噪音', category: 'whitenoise', coverColor: '2', duration: 480 },
-      { title: '海浪声', artist: '自然白噪音', category: 'whitenoise', coverColor: '3', duration: 540 },
-      { title: '咖啡馆环境音', artist: '环境音', category: 'whitenoise', coverColor: '0', duration: 420 },
-      { title: '柴火壁炉声', artist: '环境音', category: 'whitenoise', coverColor: '2', duration: 500 },
-      { title: '猫呼噜声', artist: '环境音', category: 'whitenoise', coverColor: '3', duration: 380 },
-      { title: '夏日夜晚虫鸣', artist: '自然白噪音', category: 'whitenoise', coverColor: '0', duration: 600 },
+      { title: '窗外雨声（合成 · 60s 循环）', artist: '本地环境音效', category: 'whitenoise', coverColor: '1',
+        url: '/audio/amb_rain.wav', duration: 60 },
+      { title: '清晨森林鸟鸣（合成 · 60s 循环）', artist: '本地环境音效', category: 'whitenoise', coverColor: '2',
+        url: '/audio/amb_forest.wav', duration: 60 },
+      { title: '咖啡馆环境音（合成 · 60s 循环）', artist: '本地环境音效', category: 'whitenoise', coverColor: '0',
+        url: '/audio/amb_cafe.wav', duration: 60 },
+      { title: '海浪声', artist: '环境音（待添加）', category: 'whitenoise', coverColor: '3', duration: 540 },
+      { title: '柴火壁炉声', artist: '环境音（待添加）', category: 'whitenoise', coverColor: '2', duration: 500 },
+      { title: '夏日夜晚虫鸣', artist: '环境音（待添加）', category: 'whitenoise', coverColor: '0', duration: 60 },
     ],
   },
   {
@@ -64,7 +67,7 @@ const GRADS = [
   'from-amber-300 via-rose-300 to-pink-400',
   'from-violet-400 via-indigo-400 to-mint-400',
 ]
-const STORAGE_KEY = 'mint.music.v1'
+const STORAGE_KEY = 'mint.music.v4' // v4: 钢琴曲换成真实古典曲目（钢琴音色合成 WAV），强制重种
 
 function fmt(sec?: number) {
   if (!sec || !isFinite(sec)) return '00:00'
@@ -87,13 +90,20 @@ const Music: React.FC = () => {
   const [currentId, setCurrentId] = useState<string | null>(tracks[0]?.id ?? null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [t, setT] = useState(0)
+  const [loadErr, setLoadErr] = useState<string>('')
+  const [loadingSrc, setLoadingSrc] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => { storage.set(STORAGE_KEY, tracks) }, [tracks])
 
   // Create audio once
   useEffect(() => {
-    try { audioRef.current = new Audio() } catch {}
+    try {
+      const a = new Audio()
+      a.preload = 'metadata'
+      // 本地源（/audio/*）不走 crossOrigin，避免多余 CORS 预检
+      audioRef.current = a
+    } catch {}
     return () => { try { audioRef.current?.pause() } catch {} }
   }, [])
 
@@ -112,26 +122,89 @@ const Music: React.FC = () => {
   function playTrack(track: Track) {
     setCurrentId(track.id)
     setT(0)
-    if (audioRef.current) {
-      try {
-        if (track.url) { audioRef.current.src = track.url; audioRef.current.play().catch(() => {}) }
-        else { audioRef.current.src = ''; audioRef.current.pause() }
-      } catch {}
+    setLoadErr('')
+    if (!audioRef.current) { setIsPlaying(false); return }
+    const a = audioRef.current
+    // 串行：先 pause 清状态，再赋值新 src
+    try { a.pause() } catch {}
+    try {
+      a.removeAttribute('src')
+      try { a.load() } catch {}
+    } catch {}
+    if (!track.url) {
+      setIsPlaying(false)
+      return
     }
-    setIsPlaying(!!track.url)
+    // 白噪音类默认循环播放（本地合成 WAV 仅 60 秒）
+    try { a.loop = (track.category === 'whitenoise') } catch {}
+    setLoadingSrc(true)
+    try {
+      a.src = track.url
+      a.load()
+      const started = a.play()
+      if (started && typeof started.then === 'function') {
+        started
+          .then(() => { setIsPlaying(true); setLoadingSrc(false) })
+          .catch((err) => {
+            setIsPlaying(false)
+            setLoadingSrc(false)
+            const msg = err && err.name ? `(${err.name}) ${err.message || ''}` : ''
+            setLoadErr(`浏览器阻止了自动播放或加载失败 ${msg}。请点击曲目左侧的播放键（而非底部大按钮）重试，首次点一定会播放成功。`)
+          })
+      } else {
+        setIsPlaying(true); setLoadingSrc(false)
+      }
+    } catch (err: any) {
+      setLoadingSrc(false)
+      setIsPlaying(false)
+      setLoadErr(`播放初始化异常：${err && err.message ? err.message : '未知错误'}`)
+    }
   }
   function togglePlay() {
     if (!current) return
+    const a = audioRef.current
     if (!current.url) {
-      // no source yet: simulate a playback tick
       setIsPlaying(!isPlaying)
       return
     }
-    if (audioRef.current) {
-      if (isPlaying) audioRef.current.pause()
-      else audioRef.current.play().catch(() => {})
+    if (!a) return
+    setLoadErr('')
+    if (isPlaying) {
+      try { a.pause() } catch {}
+      setIsPlaying(false)
+    } else {
+      setLoadingSrc(true)
+      // 若尚未设置 src（上次因无 src 清空过），先补上
+      try {
+        if (!a.src || a.getAttribute('src') !== current.url) {
+          try { a.loop = (current.category === 'whitenoise') } catch {}
+          a.src = current.url; try { a.load() } catch {}
+        }
+        const p = a.play()
+        if (p && typeof p.then === 'function') {
+          p.then(() => { setIsPlaying(true); setLoadingSrc(false) })
+            .catch((err) => {
+              setLoadingSrc(false)
+              setIsPlaying(false)
+              const msg = err && err.name ? `（${err.name}）${err.message || ''}` : ''
+              // 按经验给用户的兜底建议
+              let tip = `播放失败 ${msg}。`
+              if (/notallowed|user gesture|autoplay/i.test(err?.name || '') || /notallowed|autoplay/i.test(err?.message || '')) {
+                tip = '浏览器要求用户先手动点一下才允许播放。请直接点击曲目列表左侧的播放键 🔊（不是底部的大播放键）。'
+              } else if (/network|error/i.test(err?.name || '')) {
+                tip = '网络加载失败。可能是 CDN 临时不可用 / 公司内网拦截。请刷新重试，或给这首曲目粘贴你自己的 mp3 链接。'
+              }
+              setLoadErr(tip)
+            })
+        } else {
+          setIsPlaying(true); setLoadingSrc(false)
+        }
+      } catch (err: any) {
+        setLoadingSrc(false)
+        setIsPlaying(false)
+        setLoadErr(`播放异常：${err && err.message ? err.message : '未知错误'}`)
+      }
     }
-    setIsPlaying(!isPlaying)
   }
   function seek(sec: number) {
     setT(sec)
@@ -157,15 +230,46 @@ const Music: React.FC = () => {
   useEffect(() => {
     const a = audioRef.current; if (!a) return
     const onT = () => setT(a.currentTime || 0)
-    const onD = () => setDuration(a.duration && isFinite(a.duration) ? a.duration : (current?.duration || 0))
-    const onEnd = () => { setIsPlaying(false) }
+    const onD = () => {
+      const d = a.duration && isFinite(a.duration) ? a.duration : (current?.duration || 0)
+      setDuration(d)
+    }
+    const onEnd = () => {
+      // 非白噪音类播放完就下一首；白噪音由于 a.loop 已设通常不会触发 onEnd（保险也切下一首）
+      if (!current || current.category !== 'whitenoise') nextPrev(1)
+      setIsPlaying(false)
+    }
+    const onError = () => {
+      setLoadingSrc(false)
+      setIsPlaying(false)
+      const code = (a as any).error?.code
+      const codeHint: Record<number,string> = {
+        1:'(ABORTED) 加载被中止',
+        2:'(NETWORK) 网络错误 —— 本地 /audio/ 目录下的音频文件缺失？',
+        3:'(DECODE) 音频解码失败，文件格式不被浏览器支持',
+        4:'(SRC_NOT_SUPPORTED) 源不可达或格式不支持 —— 请确保 public/audio 下有同名文件',
+      }
+      setLoadErr(`⚠️ 加载失败 ${codeHint[code] || ''}。
+→ 解决方案：① 刷新页面（升级后本地有 v3 强制重种）；② 先点曲目左侧的 ▶️ 触发手势，再用底部播放控件；③ 想自定义音乐？曲目「…」→「粘贴音频URL」直接加你自己的 mp3。`)
+    }
+    const onPlaying = () => { setLoadingSrc(false); setLoadErr(''); setIsPlaying(true) }
+    const onCanPlay = () => { setLoadingSrc(false) }
+    const onPause = () => { setIsPlaying(false) }
     a.addEventListener('timeupdate', onT)
     a.addEventListener('loadedmetadata', onD)
     a.addEventListener('ended', onEnd)
+    a.addEventListener('error', onError)
+    a.addEventListener('playing', onPlaying)
+    a.addEventListener('canplay', onCanPlay)
+    a.addEventListener('pause', onPause)
     return () => {
       a.removeEventListener('timeupdate', onT)
       a.removeEventListener('loadedmetadata', onD)
       a.removeEventListener('ended', onEnd)
+      a.removeEventListener('error', onError)
+      a.removeEventListener('playing', onPlaying)
+      a.removeEventListener('canplay', onCanPlay)
+      a.removeEventListener('pause', onPause)
     }
   }, [current?.id, current?.url, current?.duration])
 
@@ -243,6 +347,8 @@ const Music: React.FC = () => {
             className="btn-press w-16 h-16 rounded-full bg-white text-mint-700 shadow-lg flex items-center justify-center">
             {isPlaying ? (
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+            ) : loadingSrc ? (
+              <span className="text-xs font-bold text-mint-600">加载中…</span>
             ) : (
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 ml-0.5"><path d="M8 5v14l11-7z"/></svg>
             )}
@@ -253,9 +359,19 @@ const Music: React.FC = () => {
           </button>
         </div>
 
-        {!current?.url && (
-          <div className="mt-4 mx-auto max-w-md rounded-xl bg-white/15 border border-white/20 backdrop-blur px-3 py-2 text-xs text-white/95">
-            💡 这是播放器 UI 预留版。点击右侧「…」按钮可给曲目粘贴在线音频 URL；或点击底部「+ 新增曲目」直接添加自己的歌。后续可接入本地音频文件。
+        {loadErr && (
+          <div className="mt-4 mx-auto max-w-lg rounded-xl bg-rose-500/25 border border-white/30 backdrop-blur px-3 py-2 text-xs text-white whitespace-pre-line">
+            {loadErr}
+          </div>
+        )}
+
+        {!current?.url && !loadErr && (
+          <div className="mt-4 mx-auto max-w-md rounded-xl bg-white/15 border border-white/20 backdrop-blur px-3 py-2 text-xs text-white/95 whitespace-pre-line">
+            💡 当前曲目暂未配置音频源。
+本地已内置 6 首可直接播放：
+🎹 钢琴：卡农 D 大调 / 致爱丽丝 / 月光奏鸣曲（钢琴音色合成）
+🌧️ 环境音：窗外雨声 / 清晨森林鸟鸣 / 咖啡馆环境音（60 秒循环）
+其它曲目点「…」→「粘贴音频URL」即可添加自己的 mp3 / wav。
           </div>
         )}
       </div>
@@ -324,8 +440,13 @@ const Music: React.FC = () => {
               </button>
               <button onClick={()=>playTrack(tk)} className="flex-1 min-w-0 text-left">
                 <div className={`text-sm line-clamp-1 ${active ? 'text-mint-700 font-semibold' : 'text-mint-900'}`}>{tk.title}</div>
-                <div className="mt-0.5 text-[11px] text-mint-700/60 line-clamp-1">
-                  {tk.artist} · {fmt(tk.duration || 0)}{tk.url ? ' · 可播' : ''}
+                <div className="mt-0.5 text-[11px] text-mint-700/60 line-clamp-1 flex items-center gap-1">
+                  <span>{tk.artist} · {fmt(tk.duration || 0)}</span>
+                  {tk.url ? (
+                    <span className="inline-block px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 font-semibold">本地内置</span>
+                  ) : (
+                    <span className="inline-block px-1.5 py-0.5 rounded-full bg-mint-100 text-mint-600/80">需自行添加 URL</span>
+                  )}
                 </div>
               </button>
               <button onClick={()=>toggleFav(tk.id)}
@@ -354,13 +475,13 @@ const Music: React.FC = () => {
 
       {/* Tips at bottom */}
       <div className="mt-5 rounded-2xl bg-white/70 border border-mint-100 shadow-card p-4 text-xs text-mint-700/80 leading-relaxed">
-        <div className="font-semibold text-mint-800 mb-1">🌿 后续可以继续迭代的方向</div>
-        <ul className="space-y-1 list-disc list-inside">
-          <li>接入本地音频文件：使用 FileReader 把音频转为本地播放列表</li>
-          <li>支持循环、随机、单曲循环三种播放模式</li>
-          <li>定时器 / 睡眠模式（定时 15m / 30m / 60m 自动停止）</li>
-          <li>在线音频源管理：钢琴曲 CDN、白噪音流 API 等</li>
-        </ul>
+        <div className="font-semibold text-mint-800 mb-1">🌿 播放不出声音？按这个顺序排查</div>
+        <ol className="space-y-1 list-decimal list-inside">
+          <li><b>首次一定要先点曲目行左侧的 ▶️ 小按钮</b>（这是用户手势，100% 绕过浏览器的自动播放禁令）；底部大按钮之后就可以随意用了。</li>
+          <li>白噪音类是本地合成的 60 秒 WAV，默认自动循环，可当工作背景音一直开着。</li>
+          <li>如果本地存储着旧版本的歌单，提示框会一直出现？刷新一次页面或清站点数据（storage key 已升到 v3 强制重种 6 首本地文件）。</li>
+          <li>想换成你喜欢的音乐？每首歌右侧「…」→「粘贴音频URL」添加任何 http(s) mp3 / wav 直链即可，不会被存到服务器，只保留在你本机。</li>
+        </ol>
       </div>
     </div>
   )

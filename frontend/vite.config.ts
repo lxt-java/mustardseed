@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
-    server: { port: 5173 },
+    server: { port: 9999, strictPort: true, host: '0.0.0.0' },
+    preview: { port: 9999, strictPort: true, host: '0.0.0.0' },
   }
 })

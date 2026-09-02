@@ -13,6 +13,8 @@ const titles: Record<string, string> = {
   '/picker': '纠结人神器',
   '/verse': '治愈金句',
   '/music': '音乐小站',
+  '/workdays': '工作日计算',
+  '/quiz': '趣味小测试',
 }
 
 const PageHeader: React.FC<Props> = ({ onBack, title, right }) => {
