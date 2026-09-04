@@ -1,7 +1,7 @@
 {
   "miniprogramRoot": "dist/",
   "compileType": "miniprogram",
-  "projectname": "mint-station",
+  "projectname": "mustard-seed",
   "appid": "wx8502a43df2ce4e1f",
   "libVersion": "3.8.10",
   "setting": {

@@ -75,7 +75,7 @@ const funTools: Tool[] = [
 ]
 
 // TabBar 页面用 switchTab，普通页面用 navigateTo
-const TabBarPages = ['/pages/home/index', '/pages/pomodoro/index', '/pages/todo/index', '/pages/verse/index', '/pages/quiz/index']
+const TabBarPages = ['/pages/home/index', '/pages/todo/index', '/pages/verse/index', '/pages/more/index']
 
 function navigateToPage(path: string) {
   if (TabBarPages.includes(path)) {
@@ -161,8 +161,8 @@ const Home: React.FC = () => {
           <View>
             <Text className="text-sm text-mint-700/70">🌱 {greet}，今天也要开心呀</Text>
             <View className="mt-1 flex items-center gap-2">
-              <Text className="text-3xl font-bold text-mint-900 tracking-tight">薄荷小站</Text>
-              <Text className="text-3xl">🌿</Text>
+              <Text className="text-3xl font-bold text-mint-900 tracking-tight">芥菜种子</Text>
+              <Text className="text-3xl">🌱</Text>
             </View>
             <Text className="mt-2 block text-sm text-mint-800/80">办公工具箱 + 休闲小玩意儿，一个页面搞定你的摸鱼与专注。</Text>
           </View>

@@ -8,8 +8,8 @@ const APP_VERSION = '1.0.0'
 
 export const appConfig = {
   version: APP_VERSION,
-  name: '薄荷小站',
-  shortName: '薄荷小站',
+  name: '芥菜种子',
+  shortName: '芥菜种子',
   description: '办公工具箱 + 休闲小玩意儿',
   homepage: 'pages/home/index',
   feedbackEmail: '', // 上线后填写

@@ -168,7 +168,7 @@ const Todo: React.FC = () => {
       .sort((a, b) => Number(a.done) - Number(b.done) || b.createdAt - a.createdAt)
       .map((t, i) => `${i + 1}. [${t.done ? '✓' : ' '}] ${t.star ? '⭐ ' : ''}${t.text}${t.dueAt ? `  ·  ${fmtDate(t.dueAt)}` : ''}`)
       .join('\n')
-    const head = `我的薄荷待办清单\n导出时间：${new Date().toLocaleString()}\n完成：${stats.done}/${stats.all}\n\n`
+    const head = `我的芥菜种子待办清单\n导出时间：${new Date().toLocaleString()}\n完成：${stats.done}/${stats.all}\n\n`
     copyText(head + lines, '已复制到剪贴板，可粘贴到备忘录')
   }
 

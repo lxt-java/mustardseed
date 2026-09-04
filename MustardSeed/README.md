@@ -80,7 +80,7 @@ npm run build:weapp
 ```json
 {
   "appid": "wx1234567890abcdef",  // 替换为你的真实 AppID
-  "projectname": "薄荷小站"
+  "projectname": "mustard-seed"
 }
 ```
 
@@ -161,10 +161,10 @@ miniprogram/
 │   └── generate-icons.js      # TabBar 图标生成脚本
 │
 ├── babel.config.js
-├── tailwind.config.js         # 薄荷主题色板
+├── tailwind.config.js         # 芥菜种子主题色板（薄荷绿基调）
 ├── postcss.config.js
 ├── tsconfig.json
-├── project.config.json        # 微信项目配置（⚠️ 需改 appid）
+├── project.config.json        # 微信项目配置（appid 已配置）
 └── package.json
 ```
 

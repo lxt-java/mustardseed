@@ -5,6 +5,9 @@ node_modules/
 .pnp.js
 .yarn/install-state.gz
 
+# ===== IDE / Agent =====
+.trae/
+
 # ===== Testing =====
 coverage/
 

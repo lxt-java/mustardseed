@@ -248,7 +248,7 @@ function AdvicePanel() {
 `🀄 我今日抽到的人生建议：
 《${card.t}》
 ${card.s}
-—— 来自「薄荷小站」${ADVICE_CARDS.length} 张人生锦囊 ✨`
+—— 来自「芥菜种子」${ADVICE_CARDS.length} 张人生锦囊 ✨`
   function next() {
     let n = Math.floor(Math.random() * ADVICE_CARDS.length)
     if (n === idx) n = (n + 1) % ADVICE_CARDS.length
