@@ -18,6 +18,10 @@ build/
 *.local
 *.tsbuildinfo
 
+# tsc 编译产物，防止遮蔽 vite.config.ts（Vite 优先加载 .js 配置）
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
 # ===== Editor logs =====
 npm-debug.log*
 yarn-debug.log*
