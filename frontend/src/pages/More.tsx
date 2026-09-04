@@ -73,7 +73,7 @@ const More: React.FC = () => {
         </Link>
       </section>
 
-      {/* 构建信息 */}
+      {/* 暂时隐藏：构建信息（恢复时取消注释）
       <section className="rounded-2xl bg-white/80 border border-mint-100 shadow-card px-4 py-2 mb-4">
         <div className="flex items-center justify-between pt-2 pb-1">
           <p className="text-sm font-semibold text-mint-800">🌿 构建信息</p>
@@ -85,8 +85,9 @@ const More: React.FC = () => {
         <Row label="最近提交" value={__GIT_COMMIT__} mono />
         <Row label="提交时间" value={gitDate()} mono />
       </section>
+      */}
 
-      {/* 全部工具 */}
+      {/* 暂时隐藏：全部工具目录（恢复时取消注释）
       <section className="mb-4">
         <p className="text-sm font-semibold text-mint-800 mb-2 px-1">🧰 全部工具</p>
         <div className="rounded-2xl bg-white/80 border border-mint-100 shadow-card overflow-hidden">
@@ -110,6 +111,7 @@ const More: React.FC = () => {
           ))}
         </div>
       </section>
+      */}
 
       {/* 建议反馈 */}
       <section className="rounded-2xl bg-white/80 border border-mint-100 shadow-card p-4 mb-6">

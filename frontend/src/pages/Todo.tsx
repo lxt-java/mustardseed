@@ -134,8 +134,11 @@ const Todo: React.FC = () => {
     const a = document.createElement('a')
     a.href = url
     a.download = `芥菜种子待办_${new Date().toISOString().slice(0,10)}.txt`
+    document.body.appendChild(a)
     a.click()
-    URL.revokeObjectURL(url)
+    a.remove()
+    // 延迟释放，避免浏览器还没开始下载就被回收
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   return (

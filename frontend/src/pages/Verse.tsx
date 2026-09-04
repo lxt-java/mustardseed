@@ -215,15 +215,6 @@ const Verse: React.FC = () => {
             className="w-4 h-4 accent-mint-600"/>
           中英双语显示
         </label>
-        <button
-          onClick={() => { setShowFavOnly(false); setTag('all'); randNext(false) }}
-          className="text-mint-700/80 hover:text-mint-800 underline-offset-2 hover:underline"
-        >
-          从全部 200 条中完全随机
-        </button>
-        <div className="text-xs text-mint-600/80">
-          本页共 {pool.length} 条 · 当前 #{pool.length ? (idx % pool.length) + 1 : 0}
-        </div>
       </div>
 
       {/* Recent */}

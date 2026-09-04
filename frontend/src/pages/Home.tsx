@@ -124,6 +124,10 @@ const funTools: Tool[] = [
   },
 ]
 
+// 暂时隐藏的工具入口（恢复时清空数组即可）
+const HIDDEN_TOOLS: string[] = ['/music', '/quiz']
+const funToolsVisible = funTools.filter((t) => !HIDDEN_TOOLS.includes(t.to))
+
 const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
   const isDisabled = tool.to === '#'
   const Wrapper: any = isDisabled ? 'div' : Link
@@ -175,7 +179,7 @@ const Home: React.FC = () => {
           <div>
             <p className="text-sm text-mint-700/70">{greet}，今天也要开心呀</p>
             <h1 className="mt-1 text-3xl sm:text-4xl font-bold text-mint-900 tracking-tight">
-              芥菜种子
+              芥菜种子 <span className="align-middle text-2xl sm:text-3xl">🌱</span>
             </h1>
             <p className="mt-2 text-sm text-mint-800/80 max-w-md">
               办公工具箱 + 休闲小玩意儿，一个页面搞定你的摸鱼与专注。最小的种子，也能长成大树。
@@ -212,10 +216,10 @@ const Home: React.FC = () => {
             </div>
             <h2 className="mt-2 text-xl font-bold text-mint-900">让生活可爱一点</h2>
           </div>
-          <span className="text-xs text-mint-700/60">共 {funTools.length} 个</span>
+          <span className="text-xs text-mint-700/60">共 {funToolsVisible.length} 个</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-          {funTools.map((t) => (
+          {funToolsVisible.map((t) => (
             <ToolCard key={t.name} tool={t} />
           ))}
         </div>
