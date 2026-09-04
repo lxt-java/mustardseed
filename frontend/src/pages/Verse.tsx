@@ -16,6 +16,7 @@ const Verse: React.FC = () => {
   const [showFavOnly, setShowFavOnly] = useState(false)
   const [dualLang, setDualLang] = useState<boolean>(true)
   const [showCopyTip, setShowCopyTip] = useState<string | null>(null)
+  const [sharePng, setSharePng] = useState<string | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { storage.set(FAV_KEY, favs) }, [favs])
@@ -81,8 +82,8 @@ const Verse: React.FC = () => {
     )
   }
 
-  function exportImage() {
-    if (!current) return
+  function buildShareSvg(): string {
+    if (!current) return ''
     // Generate a simple SVG data URL with verse text, then download as .svg
     const zhLines = wrap(current.zh, 26)
     const enLines = wrap(current.en, 60)
@@ -130,15 +131,68 @@ const Verse: React.FC = () => {
     <text x="795" y="${height - 18}" text-anchor="end" font-size="11" fill="#157652" fill-opacity="0.55">🌱 芥菜种子 · mustardseed</text>
   </g>
 </svg>`
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `金句_${current.ref.replace(/\s/g,'')}_${uid()}.svg`
-    a.click()
-    URL.revokeObjectURL(url)
-    setShowCopyTip('图片已下载 💾')
-    setTimeout(() => setShowCopyTip(null), 1600)
+    return svg
+  }
+
+  // SVG 字符串 → PNG dataURL（供长按保存 / 分享 / 下载）
+  function svgToPngDataUrl(svg: string, scale = 2): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const img = new Image()
+      img.onload = () => {
+        try {
+          const w = (img.naturalWidth || 800) * scale
+          const h = (img.naturalHeight || 600) * scale
+          const c = document.createElement('canvas')
+          c.width = w
+          c.height = h
+          const ctx = c.getContext('2d')
+          if (!ctx) throw new Error('canvas 2d 不可用')
+          ctx.drawImage(img, 0, 0, w, h)
+          URL.revokeObjectURL(url)
+          resolve(c.toDataURL('image/png'))
+        } catch (e) {
+          URL.revokeObjectURL(url)
+          reject(e)
+        }
+      }
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG 渲染失败')) }
+      img.src = url
+    })
+  }
+
+  // 点击「导出图片」：转 PNG 后弹出保存弹层
+  async function exportImage() {
+    const svg = buildShareSvg()
+    if (!svg) return
+    try {
+      const png = await svgToPngDataUrl(svg, 2)
+      setSharePng(png)
+    } catch {
+      // 兜底：极少数不支持 canvas 的环境，退回 svg 下载
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `金句_${current!.ref.replace(/\s/g,'')}_${uid()}.svg`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    }
+  }
+
+  // 系统分享面板（iOS/Android 可直接「存储图像」进相册）
+  async function sharePngFile() {
+    if (!sharePng) return
+    try {
+      const blob = await (await fetch(sharePng)).blob()
+      const file = new File([blob], '芥菜种子金句.png', { type: 'image/png' })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: '芥菜种子 · 治愈金句' })
+      }
+    } catch { /* 用户取消分享会抛 AbortError，忽略 */ }
   }
 
   return (
@@ -243,6 +297,48 @@ const Verse: React.FC = () => {
       {showCopyTip && (
         <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-50 px-4 py-2 rounded-full bg-mint-800 text-white text-sm shadow-soft animate-fade-up">
           {showCopyTip}
+        </div>
+      )}
+
+      {/* 保存图片弹层：手机长按存相册 / 系统分享 / 桌面下载 */}
+      {sharePng && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setSharePng(null)}
+        >
+          <div
+            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img src={sharePng} alt="金句分享图" className="w-full rounded-xl border border-mint-100" />
+            <p className="mt-2.5 text-[11px] text-mint-700/70 text-center leading-5">
+              📱 手机：长按图片 →「保存到相册 / 存储图像」<br />
+              💻 电脑：点击下方按钮下载
+            </p>
+            <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+              <a
+                href={sharePng}
+                download={`芥菜种子金句_${current?.ref.replace(/\s/g, '') || 'verse'}.png`}
+                className="btn-press px-3.5 py-2 rounded-xl bg-gradient-to-br from-mint-500 to-mint-700 text-white text-xs font-semibold border border-mint-600 shadow-soft"
+              >
+                ⬇️ 下载 PNG
+              </a>
+              {typeof navigator !== 'undefined' && typeof navigator.canShare === 'function' && (
+                <button
+                  onClick={sharePngFile}
+                  className="btn-press px-3.5 py-2 rounded-xl bg-mint-50 border border-mint-200 text-mint-700 text-xs font-semibold"
+                >
+                  📤 分享 / 保存
+                </button>
+              )}
+              <button
+                onClick={() => setSharePng(null)}
+                className="btn-press px-3 py-2 rounded-xl text-mint-600 text-xs"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
