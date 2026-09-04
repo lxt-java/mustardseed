@@ -10,6 +10,7 @@ import Quiz from './pages/Quiz'
 import More from './pages/More'
 import PageHeader from './components/PageHeader'
 import SiteFooter from './components/SiteFooter'
+import ScrollToTop from './components/ScrollToTop'
 
 function App() {
   const location = useLocation()
@@ -18,6 +19,7 @@ function App() {
 
   return (
     <div className="min-h-screen w-full flex flex-col">
+      <ScrollToTop />
       <div className="w-full max-w-[720px] mx-auto flex-1 flex flex-col px-4 sm:px-6">
         {/* 顶部栏：首页显示大标题，其他页显示返回 */}
         {!isHome ? <PageHeader onBack={() => navigate(-1)} /> : null}
