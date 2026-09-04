@@ -1,6 +1,6 @@
 import React from 'react'
 
-const REPO_URL = 'https://github.com/lxt-java/mint-box'
+const REPO_URL = 'https://github.com/lxt-java/mustardseed'
 
 const SiteFooter: React.FC = () => {
   return (

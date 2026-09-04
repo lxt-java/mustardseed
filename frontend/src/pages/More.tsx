@@ -6,7 +6,7 @@ declare const __GIT_BRANCH__: string
 declare const __GIT_COMMIT__: string
 declare const __GIT_DATE__: string
 
-const REPO_URL = 'https://github.com/lxt-java/mint-box'
+const REPO_URL = 'https://github.com/lxt-java/mustardseed'
 const ISSUES_URL = `${REPO_URL}/issues`
 const APP_VERSION = 'v1.0.0'
 

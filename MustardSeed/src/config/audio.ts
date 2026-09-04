@@ -7,7 +7,7 @@
  * - 正式上线前：将音频文件上传到已备案 CDN（如腾讯云 COS），
  *   修改 AUDIO_CDN_BASE 即可。
  */
-export const AUDIO_CDN_BASE = 'https://lxt-java.github.io/mint-box/audio'
+export const AUDIO_CDN_BASE = 'https://lxt-java.github.io/mustardseed/audio'
 
 export const audioUrl = (name: string) => `${AUDIO_CDN_BASE}/${name}`
 

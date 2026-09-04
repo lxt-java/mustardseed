@@ -12,10 +12,10 @@ function gitCmd(cmd: string, fallback = 'unknown'): string {
   }
 }
 
-// 部署到 GitHub Pages 的仓库名。若你的仓库不是 mint-box，
-// 请改为你的真实仓库名，例如 '/你的仓库名/' 或保持 '/' 用于自定义域名。
+// 部署到 GitHub Pages 的仓库名。若仓库再次改名，
+// 请同步修改这里的 '/mustardseed/'（或改为 '/' 用于自定义域名）。
 export default defineConfig(({ mode }) => {
-  const base = mode === 'production' ? '/mint-box/' : '/'
+  const base = mode === 'production' ? '/mustardseed/' : '/'
   return {
     base,
     plugins: [react()],

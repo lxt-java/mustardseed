@@ -127,7 +127,7 @@ const Verse: React.FC = () => {
   <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif">
     <text x="${padLR}" y="${height - 40}" font-size="14" fill="#157652" font-weight="600">—— ${current.ref}</text>
     <text x="795" y="${height - 40}" text-anchor="end" font-size="12" fill="#157652" fill-opacity="0.7">— ${current.refEn}</text>
-    <text x="795" y="${height - 18}" text-anchor="end" font-size="11" fill="#157652" fill-opacity="0.55">🌱 芥菜种子 · mint-box</text>
+    <text x="795" y="${height - 18}" text-anchor="end" font-size="11" fill="#157652" fill-opacity="0.55">🌱 芥菜种子 · mustardseed</text>
   </g>
 </svg>`
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
