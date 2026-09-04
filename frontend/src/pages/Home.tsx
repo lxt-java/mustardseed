@@ -111,7 +111,7 @@ const funTools: Tool[] = [
   {
     to: '/more',
     name: '更多',
-    desc: '版本 / 构建信息 / 建议反馈',
+    desc: '版本信息 / 建议反馈',
     color: 'from-mint-400 to-emerald-600',
     badge: '🌱 全',
     icon: (

@@ -2,28 +2,9 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import logoImg from '@/assets/logo.png'
 
-declare const __GIT_BRANCH__: string
-declare const __GIT_COMMIT__: string
-declare const __GIT_DATE__: string
-
 const REPO_URL = 'https://github.com/lxt-java/mustardseed'
 const ISSUES_URL = `${REPO_URL}/issues`
 const APP_VERSION = 'v1.0.0'
-
-function gitDate(): string {
-  const ts = Number(__GIT_DATE__)
-  if (!Number.isFinite(ts) || ts <= 0) return '—'
-  const d = new Date(ts * 1000)
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
-}
-
-function copyBuildInfo() {
-  const text = `芥菜种子 · 构建信息\n分支：${__GIT_BRANCH__}\n提交：${__GIT_COMMIT__}\n时间：${gitDate()}\n版本：${APP_VERSION}`
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text).catch(() => {})
-  }
-}
 
 const TOOLS = [
   { to: '/pomodoro', icon: '🍅', name: '番茄钟', desc: '专注计时 · 三种模式' },
@@ -72,20 +53,6 @@ const More: React.FC = () => {
           返回首页
         </Link>
       </section>
-
-      {/* 暂时隐藏：构建信息（恢复时取消注释）
-      <section className="rounded-2xl bg-white/80 border border-mint-100 shadow-card px-4 py-2 mb-4">
-        <div className="flex items-center justify-between pt-2 pb-1">
-          <p className="text-sm font-semibold text-mint-800">🌿 构建信息</p>
-          <button onClick={copyBuildInfo} className="text-[11px] text-mint-500 hover:text-mint-700 btn-press">
-            复制
-          </button>
-        </div>
-        <Row label="分支" value={__GIT_BRANCH__} mono first />
-        <Row label="最近提交" value={__GIT_COMMIT__} mono />
-        <Row label="提交时间" value={gitDate()} mono />
-      </section>
-      */}
 
       {/* 暂时隐藏：全部工具目录（恢复时取消注释）
       <section className="mb-4">
@@ -138,8 +105,6 @@ const More: React.FC = () => {
           </a>
         </div>
       </section>
-
-      <p className="text-center text-[11px] text-mint-700/50">🌱 芥菜种子 · 每一件小事都算数</p>
     </div>
   )
 }
