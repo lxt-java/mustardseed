@@ -127,7 +127,7 @@ const Pomodoro: React.FC = () => {
 
   const timeText = `${pad(seconds / 60)}:${pad(seconds % 60)}`
   const titleHint = running ? `${timeText} · ${MODES.find(m=>m.key===mode)?.label}中` : '番茄钟'
-  useEffect(() => { document.title = `${titleHint} · 薄荷小站` }, [titleHint])
+  useEffect(() => { document.title = `${titleHint} · 芥菜种子` }, [titleHint])
 
   // Circular progress
   const size = 280

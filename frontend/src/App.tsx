@@ -7,6 +7,7 @@ import Verse from './pages/Verse'
 import Music from './pages/Music'
 import Workdays from './pages/Workdays'
 import Quiz from './pages/Quiz'
+import More from './pages/More'
 import PageHeader from './components/PageHeader'
 import SiteFooter from './components/SiteFooter'
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/music" element={<Music />} />
             <Route path="/workdays" element={<Workdays />} />
             <Route path="/quiz" element={<Quiz />} />
+            <Route path="/more" element={<More />} />
           </Routes>
         </main>
 

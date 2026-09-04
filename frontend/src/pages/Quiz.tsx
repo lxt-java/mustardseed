@@ -335,7 +335,7 @@ function ColorPanel() {
 颜色：${result.name}
 性格关键词：${result.trait}
 ${result.desc}
-—— 来自「薄荷小站」趣味小测试 ✨`
+—— 来自「芥菜种子」趣味小测试 ✨`
     : ''
 
   function applyInput() {
@@ -441,7 +441,7 @@ function JokePanel() {
 `😄 今天这个笑话我给满分（第 ${idx+1} 则）
 《${j.t}》
 ${j.s}
-—— 笑一个吧 · 薄荷小站 ✨`
+—— 笑一个吧 · 芥菜种子 ✨`
 
   return (
     <div className="space-y-4">
@@ -488,7 +488,7 @@ function AdvicePanel() {
 `🀄 我今日抽到的人生建议：
 《${card.t}》
 ${card.s}
-—— 来自「薄荷小站」${ADVICE_CARDS.length} 张人生锦囊 ✨`
+—— 来自「芥菜种子」${ADVICE_CARDS.length} 张人生锦囊 ✨`
   function next() {
     let n = Math.floor(Math.random() * ADVICE_CARDS.length)
     if (n === idx) n = (n + 1) % ADVICE_CARDS.length

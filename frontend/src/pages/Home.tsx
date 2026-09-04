@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import React from 'react'
+import logoImg from '@/assets/logo.png'
 
 type Tool = {
   to: string
@@ -107,6 +108,20 @@ const funTools: Tool[] = [
       </svg>
     ),
   },
+  {
+    to: '/more',
+    name: '更多',
+    desc: '版本 / 构建信息 / 建议反馈',
+    color: 'from-mint-400 to-emerald-600',
+    badge: '🌱 全',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" className="w-8 h-8 text-white">
+        <path d="M7 10.2c1.1 0 1.8.9 1.8 1.8s-.7 1.8-1.8 1.8-1.8-.9-1.8-1.8.7-1.8 1.8-1.8z" />
+        <path d="M12 9c1.1 0 1.8.9 1.8 1.8v2.4c0 .9-.7 1.8-1.8 1.8s-1.8-.9-1.8-1.8v-2.4c0-.9.7-1.8 1.8-1.8z" />
+        <path d="M17 10.2c1.1 0 1.8.9 1.8 1.8s-.7 1.8-1.8 1.8-1.8-.9-1.8-1.8.7-1.8 1.8-1.8z" />
+      </svg>
+    ),
+  },
 ]
 
 const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
@@ -158,19 +173,15 @@ const Home: React.FC = () => {
       <section className="mb-8">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm text-mint-700/70">🌱 {greet}，今天也要开心呀</p>
+            <p className="text-sm text-mint-700/70">{greet}，今天也要开心呀</p>
             <h1 className="mt-1 text-3xl sm:text-4xl font-bold text-mint-900 tracking-tight">
-              薄荷小站
+              芥菜种子
             </h1>
             <p className="mt-2 text-sm text-mint-800/80 max-w-md">
-              办公工具箱 + 休闲小玩意儿，一个页面搞定你的摸鱼与专注。
+              办公工具箱 + 休闲小玩意儿，一个页面搞定你的摸鱼与专注。最小的种子，也能长成大树。
             </p>
           </div>
-          <div className="hidden sm:flex w-20 h-20 rounded-3xl bg-gradient-to-br from-mint-400 to-mint-600 shadow-soft items-center justify-center shrink-0">
-            <svg viewBox="0 0 24 24" fill="white" className="w-10 h-10">
-              <path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z"/>
-            </svg>
-          </div>
+          <img src={logoImg} alt="芥菜种子" className="hidden sm:block w-20 h-20 rounded-3xl shadow-soft shrink-0" />
         </div>
       </section>
 

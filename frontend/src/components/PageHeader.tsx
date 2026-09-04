@@ -15,11 +15,12 @@ const titles: Record<string, string> = {
   '/music': '音乐小站',
   '/workdays': '工作日计算',
   '/quiz': '趣味小测试',
+  '/more': '更多',
 }
 
 const PageHeader: React.FC<Props> = ({ onBack, title, right }) => {
   const loc = useLocation()
-  const t = title || titles[loc.pathname] || '薄荷小站'
+  const t = title || titles[loc.pathname] || '芥菜种子'
 
   return (
     <header className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 pt-[max(env(safe-area-inset-top),12px)] pb-3 backdrop-blur-md bg-white/70 border-b border-mint-100/60">

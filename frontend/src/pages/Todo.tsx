@@ -128,12 +128,12 @@ const Todo: React.FC = () => {
       .sort((a,b) => Number(a.done) - Number(b.done) || b.createdAt - a.createdAt)
       .map((t, i) => `${i+1}. [${t.done?'✓':' '}] ${t.star?'⭐ ':''}${t.text}${t.dueAt?`  ·  ${fmtDate(t.dueAt)}`:''}`)
       .join('\n')
-    const head = `我的薄荷待办清单\n导出时间：${new Date().toLocaleString()}\n完成：${stats.done}/${stats.all}\n\n`
+    const head = `我的芥菜种子待办清单\n导出时间：${new Date().toLocaleString()}\n完成：${stats.done}/${stats.all}\n\n`
     const blob = new Blob([head + lines], { type: 'text/plain;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `薄荷待办_${new Date().toISOString().slice(0,10)}.txt`
+    a.download = `芥菜种子待办_${new Date().toISOString().slice(0,10)}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
