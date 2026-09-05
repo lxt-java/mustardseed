@@ -31,7 +31,7 @@ function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement, W: numb
 
 /** SVG 字符串 → PNG dataURL */
 export async function svgToPngDataUrl(svg: string, opts: SvgToPngOptions = {}): Promise<string> {
-  const { scale = 2, bgUrl, overlayAlpha = 0.82 } = opts
+  const { scale = 2, bgUrl, overlayAlpha = 0.55 } = opts
   const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   try {

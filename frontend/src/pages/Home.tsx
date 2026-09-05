@@ -185,7 +185,7 @@ const Home: React.FC = () => {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm text-mint-700/70">{greeting}</p>
-            <h1 className="mt-1 inline-flex items-end text-3xl sm:text-4xl font-bold text-mint-900 tracking-tight">
+            <h1 className="mt-1 inline-flex items-center text-3xl sm:text-4xl font-bold text-mint-900 tracking-tight">
               芥菜种子 <span className="ml-1 text-2xl sm:text-3xl leading-none">🌱</span>
             </h1>
             <p className="mt-2 text-sm text-mint-800/80 max-w-md">
