@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import logoImg from '@/assets/logo.png'
+import { trackEvent } from '@/utils/analytics'
 
 const REPO_URL = 'https://github.com/lxt-java/mustardseed'
 const ISSUES_URL = `${REPO_URL}/issues`
@@ -91,6 +92,7 @@ const More: React.FC = () => {
             href={ISSUES_URL}
             target="_blank"
             rel="noreferrer noopener"
+            onClick={() => trackEvent('建议反馈', '点击', '去提 Issue')}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-mint-500 to-mint-600 shadow-soft text-white text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             📝 去提 Issue
@@ -99,6 +101,7 @@ const More: React.FC = () => {
             href={REPO_URL}
             target="_blank"
             rel="noreferrer noopener"
+            onClick={() => trackEvent('建议反馈', '点击', 'GitHub 仓库')}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-mint-200 text-mint-700 text-sm font-semibold hover:bg-mint-50 transition-colors"
           >
             ⭐ GitHub 仓库

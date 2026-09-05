@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { storage } from '@/utils/storage'
+import { trackEvent } from '@/utils/analytics'
 
 // 内置模板：选菜 / 周末去哪玩 / 二选一快问快答 / 抛硬币 / 掷骰子
 type Preset = {
@@ -146,6 +147,7 @@ const Picker: React.FC = () => {
     setIsCustom(false)
     setResult(null)
     stopSpin()
+    trackEvent('纠结人神器', '选模板', PRESETS.find(p => p.id === id)?.name ?? id)
   }
   function goCustom() {
     setIsCustom(true)

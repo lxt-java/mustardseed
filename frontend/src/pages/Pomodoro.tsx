@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { storage } from '@/utils/storage'
+import { trackEvent } from '@/utils/analytics'
 
 type Mode = 'focus' | 'short' | 'long'
 
@@ -158,7 +159,10 @@ const Pomodoro: React.FC = () => {
         if (AC) { const x = new AC(); x.resume?.(); x.close?.() }
       } catch (e) {/* ignore */}
     }
-    setRunning((r) => !r)
+    setRunning((r) => {
+      trackEvent('番茄钟', r ? '暂停' : '开始', mode)
+      return !r
+    })
   }
   function resetTimer() {
     setRunning(false)

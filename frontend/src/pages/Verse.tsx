@@ -4,6 +4,7 @@ import { storage } from '@/utils/storage'
 import { svgToPngDataUrl, shareImageFile, escXml } from '@/utils/shareImage'
 import { getShareTheme } from '@/utils/shareThemes'
 import ShareThemePicker from '@/components/ShareThemePicker'
+import { trackEvent } from '@/utils/analytics'
 
 const FAV_KEY = 'mint.verse.fav.v1'
 
@@ -202,6 +203,7 @@ const Verse: React.FC = () => {
 
   // 系统分享面板（iOS/Android 可直接「存储图像」进相册）
   async function sharePngFile() {
+    trackEvent('治愈金句', '分享图片')
     if (sharePng) await shareImageFile(sharePng, '芥菜种子金句.png', '芥菜种子 · 治愈金句')
   }
 
@@ -266,9 +268,9 @@ const Verse: React.FC = () => {
 
       {/* Action Row */}
       <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-        <ActionBtn onClick={() => randNext()} label="换一条" icon="🎲" primary />
-        <ActionBtn onClick={toggleFav} label={current && favs.includes(current.id) ? '已收藏' : '收藏'} icon="⭐" />
-        <ActionBtn onClick={() => copyText('full')} label="复制" icon="📋" />
+        <ActionBtn onClick={() => { trackEvent('治愈金句', '换一条'); randNext() }} label="换一条" icon="🎲" primary />
+        <ActionBtn onClick={() => { trackEvent('治愈金句', '收藏'); toggleFav() }} label={current && favs.includes(current.id) ? '已收藏' : '收藏'} icon="⭐" />
+        <ActionBtn onClick={() => { trackEvent('治愈金句', '复制'); copyText('full') }} label="复制" icon="📋" />
         <ActionBtn onClick={() => openExport(shareTheme)} label="导出图片" icon="💾" />
       </div>
 

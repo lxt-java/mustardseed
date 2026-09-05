@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import React from 'react'
 import logoImg from '@/assets/logo.png'
+import { trackEvent } from '@/utils/analytics'
 
 type Tool = {
   to: string
@@ -136,6 +137,7 @@ const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
   return (
     <Wrapper
       {...wrapperProps}
+      onClick={() => { if (!isDisabled) trackEvent('工具入口', '点击', tool.name) }}
       className={`card-hover group relative block rounded-2xl overflow-hidden shadow-card bg-white border border-mint-100/70 ${isDisabled ? 'opacity-75 cursor-not-allowed' : ''}`}
     >
       <div className={`h-24 bg-gradient-to-br ${tool.color} relative flex items-end p-4 overflow-hidden`}>

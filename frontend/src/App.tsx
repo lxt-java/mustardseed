@@ -1,4 +1,5 @@
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useRef } from 'react'
 import Home from './pages/Home'
 import Pomodoro from './pages/Pomodoro'
 import Todo from './pages/Todo'
@@ -11,11 +12,20 @@ import More from './pages/More'
 import PageHeader from './components/PageHeader'
 import SiteFooter from './components/SiteFooter'
 import ScrollToTop from './components/ScrollToTop'
+import { initAnalytics, trackPageview } from './utils/analytics'
 
 function App() {
   const location = useLocation()
   const navigate = useNavigate()
   const isHome = location.pathname === '/' || location.pathname === ''
+  const firstRender = useRef(true)
+
+  // 初始化统计；SPA 路由变化手动补 PV（首次加载由 hm.js 自动统计）
+  useEffect(() => { initAnalytics() }, [])
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return }
+    trackPageview(location.pathname)
+  }, [location.pathname])
 
   return (
     <div className="min-h-screen w-full flex flex-col">

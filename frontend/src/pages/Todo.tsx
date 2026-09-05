@@ -3,6 +3,7 @@ import { storage } from '@/utils/storage'
 import { svgToPngDataUrl, shareImageFile, escXml } from '@/utils/shareImage'
 import { getShareTheme } from '@/utils/shareThemes'
 import ShareThemePicker from '@/components/ShareThemePicker'
+import { trackEvent } from '@/utils/analytics'
 
 export interface TodoItem {
   id: string
@@ -107,6 +108,7 @@ const Todo: React.FC = () => {
     if (!text) return
     setTodos((arr) => [{ id: uid(), text, done: false, createdAt: Date.now() }, ...arr])
     setInput('')
+    trackEvent('待办清单', '新增')
   }
   function toggle(id: string) { setTodos((arr) => arr.map(t => t.id === id ? { ...t, done: !t.done } : t)) }
   function toggleStar(id: string) { setTodos((arr) => arr.map(t => t.id === id ? { ...t, star: !t.star } : t)) }
@@ -141,6 +143,7 @@ const Todo: React.FC = () => {
 
   // 手机端剪贴板（navigator.clipboard 在微信/旧浏览器不可用时回退 execCommand）
   async function copyExport() {
+    trackEvent('待办清单', '复制文字')
     const text = buildExportText()
     let ok = false
     try {
@@ -276,6 +279,7 @@ const Todo: React.FC = () => {
     setExportOpen(true)
     setExportPng(null)
     setExportLoading(true)
+    trackEvent('待办清单', '导出图片', themeId)
     try {
       const png = await svgToPngDataUrl(buildTodoSvg(themeId), { scale: 2, bgUrl: getShareTheme(themeId).bg })
       setExportPng(png)
