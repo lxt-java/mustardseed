@@ -12,7 +12,7 @@ import More from './pages/More'
 import PageHeader from './components/PageHeader'
 import SiteFooter from './components/SiteFooter'
 import ScrollToTop from './components/ScrollToTop'
-import { initAnalytics, trackPageview } from './utils/analytics'
+import { trackPageview } from './utils/analytics'
 
 function App() {
   const location = useLocation()
@@ -20,8 +20,7 @@ function App() {
   const isHome = location.pathname === '/' || location.pathname === ''
   const firstRender = useRef(true)
 
-  // 初始化统计；SPA 路由变化手动补 PV（首次加载由 hm.js 自动统计）
-  useEffect(() => { initAnalytics() }, [])
+  // SPA 路由变化手动补 PV（首次加载由 hm.js 自动统计；脚本在 index.html 静态引入）
   useEffect(() => {
     if (firstRender.current) { firstRender.current = false; return }
     trackPageview(location.pathname)
