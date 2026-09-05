@@ -313,11 +313,11 @@ const Verse: React.FC = () => {
       {/* 保存图片弹层：手机长按存相册 / 系统分享 / 桌面下载 */}
       {shareOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[60] bg-black/60 flex items-start sm:items-center justify-center p-4 pt-8 sm:pt-4"
           onClick={() => setShareOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up max-h-[88vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {shareLoading || !sharePng ? (
@@ -327,7 +327,7 @@ const Verse: React.FC = () => {
               </div>
             ) : (
               <>
-                <img src={sharePng} alt="金句分享图" className="w-full rounded-xl border border-mint-100" />
+                <img src={sharePng} alt="金句分享图" className="w-full max-h-[52vh] object-contain rounded-xl border border-mint-100" />
                 <ShareThemePicker value={shareTheme} onChange={openExport} />
                 <p className="mt-2.5 text-[11px] text-mint-700/70 text-center leading-5">
                   📱 手机：长按图片 →「保存到相册 / 存储图像」<br />

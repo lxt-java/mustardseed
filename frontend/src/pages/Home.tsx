@@ -58,7 +58,7 @@ const funTools: Tool[] = [
   {
     to: '/verse',
     name: '治愈金句',
-    desc: '随机圣经经文 · 中英对照',
+    desc: 'pick你喜欢的，给心灵放个假',
     color: 'from-indigo-400 to-violet-500',
     badge: '✨ 首发',
     icon: (
@@ -164,12 +164,19 @@ const ToolCard: React.FC<{ tool: Tool }> = ({ tool }) => {
 }
 
 const Home: React.FC = () => {
-  const hour = new Date().getHours()
-  const greet =
-    hour < 6 ? '凌晨好' :
-    hour < 11 ? '早上好' :
-    hour < 13 ? '中午好' :
-    hour < 18 ? '下午好' : '晚上好'
+  // 根据时间段与是否周末生成问候语
+  const greeting = (() => {
+    const now = new Date()
+    const hour = now.getHours()
+    const isWeekend = now.getDay() === 0 // 仅周日算周末
+    if (hour < 6)  return isWeekend ? '凌晨好，周末愉快呀' : '凌晨好，早点休息呀'
+    if (hour < 10) return isWeekend ? '早上好，周末愉快呀' : '早上好，今天也要开心呀'
+    if (hour < 12) return isWeekend ? '早上好，周末愉快呀' : '早上好，元气满满呀'
+    if (hour < 14) return isWeekend ? '中午好，周末愉快呀' : '中午好，记得吃饭呀'
+    if (hour < 18) return isWeekend ? '下午好，周末愉快呀' : '下午好，记得喝杯水呀'
+    if (hour < 22) return isWeekend ? '晚上好，周末愉快呀' : '晚上好，今天也要开心呀'
+    return '夜深了，早点休息呀'
+  })()
 
   return (
     <div className="animate-fade-up">
@@ -177,9 +184,9 @@ const Home: React.FC = () => {
       <section className="mb-8">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm text-mint-700/70">{greet}，今天也要开心呀</p>
-            <h1 className="mt-1 text-3xl sm:text-4xl font-bold text-mint-900 tracking-tight">
-              芥菜种子 <span className="align-middle text-2xl sm:text-3xl">🌱</span>
+            <p className="text-sm text-mint-700/70">{greeting}</p>
+            <h1 className="mt-1 inline-flex items-end text-3xl sm:text-4xl font-bold text-mint-900 tracking-tight">
+              芥菜种子 <span className="ml-1 text-2xl sm:text-3xl leading-none">🌱</span>
             </h1>
             <p className="mt-2 text-sm text-mint-800/80 max-w-md">
               办公工具箱 + 休闲小玩意儿，一个页面搞定你的摸鱼与专注。最小的种子，也能长成大树。

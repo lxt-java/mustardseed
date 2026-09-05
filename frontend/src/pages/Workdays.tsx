@@ -109,28 +109,38 @@ const Workdays: React.FC = () => {
   }
 
   // === Range result ===
+  const todayYmd = YMD(new Date())
   const rangeResult = useMemo(() => {
     if (!start || !end) return null
     let total = diffDays(start, end)
     let neg = false
     if (total < 0) { total = -total; neg = true }
     let work = 0, weekend = 0, hol = 0, makeup = 0
+    let remDays = 0, remWork = 0, remWeekend = 0, remHol = 0, remMakeup = 0
     for (let i = 0; i <= total; i++) {
       const d = addDays(start, neg ? -i : i)
-      if (holidaySet.has(d)) hol++
-      else if (makeupSet.has(d)) { makeup++; work++ }
-      else {
+      const isFuture = d > todayYmd // 未来日期（不含今天）计入剩余
+      if (holidaySet.has(d)) {
+        hol++
+        if (isFuture) remHol++
+      } else if (makeupSet.has(d)) {
+        makeup++; work++
+        if (isFuture) { remMakeup++; remWork++ }
+      } else {
         const rest = isRestDayByMode(d)
-        if (rest) weekend++; else work++
+        if (rest) { weekend++; if (isFuture) remWeekend++ }
+        else { work++; if (isFuture) remWork++ }
       }
+      if (isFuture) remDays++
     }
     return {
       realStart: neg ? end : start,
       realEnd:   neg ? start : end,
       total: total + 1,
       work, weekend, hol, makeup,
+      remDays, remWork, remWeekend, remHol, remMakeup,
     }
-  }, [start, end, workMode]) // eslint-disable-line
+  }, [start, end, workMode, todayYmd]) // eslint-disable-line
 
   // ====== Presets ======
   const thisWeek = () => {
@@ -199,17 +209,27 @@ const Workdays: React.FC = () => {
         {rangeResult && (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
-              <Stat label="总天数"          value={rangeResult.total}   color="bg-mint-50 text-mint-800" />
-              <Stat label="工作日 📗"       value={rangeResult.work}    color="bg-emerald-50 text-emerald-800" />
-              <Stat label="周末"            value={rangeResult.weekend} color="bg-sky-50 text-sky-800" />
-              <Stat label="法定假 🎋"       value={rangeResult.hol}     color="bg-rose-50 text-rose-800" />
-              <Stat label="调休补班"        value={rangeResult.makeup}  color="bg-amber-50 text-amber-800" />
+              <Stat label="总天数"
+                value={<>{rangeResult.total}<span className="text-sm opacity-60">/{rangeResult.remDays}</span></>}
+                color="bg-mint-50 text-mint-800" />
+              <Stat label="工作日 📗"
+                value={<>{rangeResult.work}<span className="text-sm opacity-60">/{rangeResult.remWork}</span></>}
+                color="bg-emerald-50 text-emerald-800" />
+              <Stat label="周末"
+                value={<>{rangeResult.weekend}<span className="text-sm opacity-60">/{rangeResult.remWeekend}</span></>}
+                color="bg-sky-50 text-sky-800" />
+              <Stat label="法定假 🎋"
+                value={<>{rangeResult.hol}<span className="text-sm opacity-60">/{rangeResult.remHol}</span></>}
+                color="bg-rose-50 text-rose-800" />
+              <Stat label="调休补班"
+                value={<>{rangeResult.makeup}<span className="text-sm opacity-60">/{rangeResult.remMakeup}</span></>}
+                color="bg-amber-50 text-amber-800" />
             </div>
             <div className="text-xs text-mint-700/70 bg-mint-50/60 border border-mint-100 rounded-xl px-3 py-2 leading-relaxed">
               📆 {rangeResult.realStart} → {rangeResult.realEnd}，
-              共 <b>{rangeResult.total}</b> 天，
+              共 <b>{rangeResult.total}</b> 天（剩 {rangeResult.remDays} 天），
               模式 <b>{WM_LABEL[workMode]}</b>，
-              实际上班 <b>{rangeResult.work}</b> 天
+              实际上班 <b>{rangeResult.work}</b> 天（剩 {rangeResult.remWork} 天）
               {rangeResult.makeup > 0 ? <>（含 {rangeResult.makeup} 个周末调休补班日）</> : null}
             </div>
           </>
@@ -258,10 +278,10 @@ const LabelInput: React.FC<{ label: string; children: React.ReactNode }> = ({ la
   </label>
 )
 
-const Stat: React.FC<{ label: string; value: number | string; color: string }> = ({ label, value, color }) => (
+const Stat: React.FC<{ label: string; value: React.ReactNode; color: string }> = ({ label, value, color }) => (
   <div className={`rounded-xl px-3 py-3 ${color} shadow-sm`}>
     <div className="text-[10px] opacity-75 font-medium">{label}</div>
-    <div className="text-xl font-bold mt-1">{value}</div>
+    <div className="text-xl font-bold mt-1 leading-none">{value}</div>
   </div>
 )
 
@@ -343,13 +363,14 @@ function MonthCalendar(props: {
     <div className="rounded-2xl bg-white/85 border border-mint-100 shadow-card p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="text-base font-bold text-mint-900">{month.title}</div>
-        <div className="text-[10px] text-mint-700/70 font-medium grid grid-cols-7 gap-1 w-64 sm:w-72 text-center">
-          <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span className="text-sky-700">六</span><span className="text-sky-700">日</span>
-        </div>
+      </div>
+      {/* 星期标题：与下方日期使用完全相同的 grid 列结构，保证对齐 */}
+      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1.5 text-center text-[10px] text-mint-700/70 font-medium">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span className="text-sky-700">六</span><span className="text-sky-700">日</span>
       </div>
       <div className="space-y-1.5">
         {month.weeks.map((wk, wi) => (
-          <div key={wi} className="grid grid-cols-7 gap-1 sm:gap-1.5 justify-items-end">
+          <div key={wi} className="grid grid-cols-7 gap-1 sm:gap-1.5 justify-items-center">
             {wk.map((c, di) => {
               if (c.kind === 'empty') return <div key={di} className={cellClass('empty', false, false)}>&nbsp;</div>
               const k = classifyDay(c.ymd)

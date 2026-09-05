@@ -71,36 +71,39 @@ const Pomodoro: React.FC = () => {
     storage.set(STORAGE_KEY, { settings, completedDates, totalFocus })
   }, [settings, completedDates, totalFocus])
 
-  // reset time when mode or settings duration changes
+  // reset time when mode or settings duration changes (only when not running)
   useEffect(() => {
     if (running) return
     const m = mode === 'focus' ? settings.focusMin : mode === 'short' ? settings.shortMin : settings.longMin
     setSeconds(m * 60)
-  }, [mode, settings.focusMin, settings.shortMin, settings.longMin, running])
+  }, [mode, settings.focusMin, settings.shortMin, settings.longMin])
 
   // tick
   useEffect(() => {
     if (!running) return
     intervalRef.current = window.setInterval(() => {
-      setSeconds((s) => {
-        if (s <= 1) {
-          // finish
-          finishOne()
-          return 0
-        }
-        return s - 1
-      })
+      setSeconds((s) => Math.max(0, s - 1))
     }, 1000)
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running])
+
+  // 完成检测：秒数归零时结算（用 ref 防止 strict mode 下 effect 双调用导致重复累加）
+  const finishingRef = useRef(false)
+  useEffect(() => {
+    if (seconds === 0 && running && !finishingRef.current) {
+      finishingRef.current = true
+      finishOne()
+      setTimeout(() => { finishingRef.current = false }, 0)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, running])
 
   function finishOne() {
     if (intervalRef.current) clearInterval(intervalRef.current)
     beep(settings.soundOn)
 
     if (mode === 'focus') {
-      // record
       const today = new Date().toISOString().slice(0, 10)
       setCompletedDates((m) => ({ ...m, [today]: (m[today] ?? 0) + 1 }))
       setTotalFocus((t) => t + 1)
