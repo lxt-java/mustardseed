@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /** 图片资源导入 */
 declare module '*.png' {
   const src: string

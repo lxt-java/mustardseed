@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { TAGS_CN, VERSES, type Verse } from '@/data/verses'
 import { storage } from '@/utils/storage'
 import { svgToPngDataUrl, shareImageFile, escXml } from '@/utils/shareImage'
+import { getShareTheme } from '@/utils/shareThemes'
+import ShareThemePicker from '@/components/ShareThemePicker'
 
 const FAV_KEY = 'mint.verse.fav.v1'
 
@@ -17,7 +19,10 @@ const Verse: React.FC = () => {
   const [showFavOnly, setShowFavOnly] = useState(false)
   const [dualLang, setDualLang] = useState<boolean>(true)
   const [showCopyTip, setShowCopyTip] = useState<string | null>(null)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareLoading, setShareLoading] = useState(false)
   const [sharePng, setSharePng] = useState<string | null>(null)
+  const [shareTheme, setShareTheme] = useState('classic')
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => { storage.set(FAV_KEY, favs) }, [favs])
@@ -84,8 +89,9 @@ const Verse: React.FC = () => {
   }
 
   // 生成金句分享图 SVG：排版与页面卡片一致（标签 / 中文大字 / 出处 / 分隔线 / 英文斜体）
-  function buildShareSvg(): string {
+  function buildShareSvg(themeId = 'classic'): string {
     if (!current) return ''
+    const photo = themeId !== 'classic'
     const W = 800
     const padX = 56
     const FONT_SANS = "-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
@@ -153,24 +159,29 @@ const Verse: React.FC = () => {
       <stop offset="100%" stop-color="#157652"/>
     </linearGradient>
   </defs>
+  ${photo ? '' : `
   <rect width="${W}" height="${height}" fill="url(#bg)"/>
   <g opacity="0.35" transform="translate(680, -40) rotate(20)">
     <path d="M0 0 C 80 40 80 160 0 200 C -30 160 -30 40 0 0 Z" fill="url(#leaf)"/>
   </g>
   <g opacity="0.3" transform="translate(-60, ${height - 120}) rotate(-18)">
     <path d="M0 0 C 90 50 90 180 0 220 C -40 180 -40 50 0 0 Z" fill="url(#leaf)"/>
-  </g>
+  </g>`}
   ${items.join('\n  ')}
   <text x="${W - padX}" y="${height - 30}" text-anchor="end" font-size="17" fill="#7fb8a0" font-family="${FONT_SANS}">🌱 芥菜种子 · mustardseed</text>
 </svg>`
   }
 
-  // 点击「导出图片」：转 PNG 后弹出保存弹层
-  async function exportImage() {
-    const svg = buildShareSvg()
-    if (!svg) return
+  // 点击「导出图片」：按所选主题生成 PNG 并弹出保存弹层
+  async function openExport(themeId: string) {
+    setShareTheme(themeId)
+    setShareOpen(true)
+    setShareLoading(true)
+    setSharePng(null)
+    const svg = buildShareSvg(themeId)
+    if (!svg) { setShareLoading(false); return }
     try {
-      const png = await svgToPngDataUrl(svg, 2)
+      const png = await svgToPngDataUrl(svg, { scale: 2, bgUrl: getShareTheme(themeId).bg })
       setSharePng(png)
     } catch {
       // 兜底：极少数不支持 canvas 的环境，退回 svg 下载
@@ -183,6 +194,9 @@ const Verse: React.FC = () => {
       a.click()
       a.remove()
       setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setShareOpen(false)
+    } finally {
+      setShareLoading(false)
     }
   }
 
@@ -255,7 +269,7 @@ const Verse: React.FC = () => {
         <ActionBtn onClick={() => randNext()} label="换一条" icon="🎲" primary />
         <ActionBtn onClick={toggleFav} label={current && favs.includes(current.id) ? '已收藏' : '收藏'} icon="⭐" />
         <ActionBtn onClick={() => copyText('full')} label="复制" icon="📋" />
-        <ActionBtn onClick={exportImage} label="导出图片" icon="💾" />
+        <ActionBtn onClick={() => openExport(shareTheme)} label="导出图片" icon="💾" />
       </div>
 
       {/* Options Row */}
@@ -297,43 +311,53 @@ const Verse: React.FC = () => {
       )}
 
       {/* 保存图片弹层：手机长按存相册 / 系统分享 / 桌面下载 */}
-      {sharePng && (
+      {shareOpen && (
         <div
           className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4"
-          onClick={() => setSharePng(null)}
+          onClick={() => setShareOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up"
+            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <img src={sharePng} alt="金句分享图" className="w-full rounded-xl border border-mint-100" />
-            <p className="mt-2.5 text-[11px] text-mint-700/70 text-center leading-5">
-              📱 手机：长按图片 →「保存到相册 / 存储图像」<br />
-              💻 电脑：点击下方按钮下载
-            </p>
-            <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
-              <a
-                href={sharePng}
-                download={`芥菜种子金句_${current?.ref.replace(/\s/g, '') || 'verse'}.png`}
-                className="btn-press px-3.5 py-2 rounded-xl bg-gradient-to-br from-mint-500 to-mint-700 text-white text-xs font-semibold border border-mint-600 shadow-soft"
-              >
-                ⬇️ 下载 PNG
-              </a>
-              {typeof navigator !== 'undefined' && typeof navigator.canShare === 'function' && (
-                <button
-                  onClick={sharePngFile}
-                  className="btn-press px-3.5 py-2 rounded-xl bg-mint-50 border border-mint-200 text-mint-700 text-xs font-semibold"
-                >
-                  📤 分享 / 保存
-                </button>
-              )}
-              <button
-                onClick={() => setSharePng(null)}
-                className="btn-press px-3 py-2 rounded-xl text-mint-600 text-xs"
-              >
-                关闭
-              </button>
-            </div>
+            {shareLoading || !sharePng ? (
+              <div className="py-16 text-center text-mint-700/70 text-sm">
+                <div className="text-2xl mb-2 animate-pulse">🌱</div>
+                正在生成分享图…
+              </div>
+            ) : (
+              <>
+                <img src={sharePng} alt="金句分享图" className="w-full rounded-xl border border-mint-100" />
+                <ShareThemePicker value={shareTheme} onChange={openExport} />
+                <p className="mt-2.5 text-[11px] text-mint-700/70 text-center leading-5">
+                  📱 手机：长按图片 →「保存到相册 / 存储图像」<br />
+                  💻 电脑：点击下方按钮下载
+                </p>
+                <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                  <a
+                    href={sharePng}
+                    download={`芥菜种子金句_${current?.ref.replace(/\s/g, '') || 'verse'}.png`}
+                    className="btn-press px-3.5 py-2 rounded-xl bg-gradient-to-br from-mint-500 to-mint-700 text-white text-xs font-semibold border border-mint-600 shadow-soft"
+                  >
+                    ⬇️ 下载 PNG
+                  </a>
+                  {typeof navigator !== 'undefined' && typeof navigator.canShare === 'function' && (
+                    <button
+                      onClick={sharePngFile}
+                      className="btn-press px-3.5 py-2 rounded-xl bg-mint-50 border border-mint-200 text-mint-700 text-xs font-semibold"
+                    >
+                      📤 分享 / 保存
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShareOpen(false)}
+                    className="btn-press px-3 py-2 rounded-xl text-mint-600 text-xs"
+                  >
+                    关闭
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

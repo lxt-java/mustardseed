@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { storage } from '@/utils/storage'
 import { svgToPngDataUrl, shareImageFile, escXml } from '@/utils/shareImage'
+import { getShareTheme } from '@/utils/shareThemes'
+import ShareThemePicker from '@/components/ShareThemePicker'
 
 export interface TodoItem {
   id: string
@@ -57,6 +59,7 @@ const Todo: React.FC = () => {
   const [exportCopied, setExportCopied] = useState(false)
   const [exportPng, setExportPng] = useState<string | null>(null)
   const [exportLoading, setExportLoading] = useState(false)
+  const [shareTheme, setShareTheme] = useState('classic')
 
   useEffect(() => { storage.set(STORAGE_KEY, todos) }, [todos])
 
@@ -163,7 +166,8 @@ const Todo: React.FC = () => {
   }
 
   // 待办分享图：卡片式设计，与金句图风格统一
-  function buildTodoSvg(): string {
+  function buildTodoSvg(themeId = 'classic'): string {
+    const photo = themeId !== 'classic'
     const W = 800
     const padX = 56
     const FONT = "-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
@@ -253,25 +257,27 @@ const Todo: React.FC = () => {
       <stop offset="100%" stop-color="#157652"/>
     </linearGradient>
   </defs>
+  ${photo ? '' : `
   <rect width="${W}" height="${height}" fill="url(#bg)"/>
   <g opacity="0.35" transform="translate(680, -40) rotate(20)">
     <path d="M0 0 C 80 40 80 160 0 200 C -30 160 -30 40 0 0 Z" fill="url(#leaf)"/>
   </g>
   <g opacity="0.3" transform="translate(-60, ${height - 120}) rotate(-18)">
     <path d="M0 0 C 90 50 90 180 0 220 C -40 180 -40 50 0 0 Z" fill="url(#leaf)"/>
-  </g>
+  </g>`}
   ${items.join('\n  ')}
   <text x="${W - padX}" y="${height - 30}" text-anchor="end" font-size="17" fill="#7fb8a0" font-family="${FONT}">🌱 芥菜种子 · mustardseed</text>
 </svg>`
   }
 
-  // 点击「导出」：生成图片并弹出保存弹层
-  async function openExport() {
+  // 点击「导出」：按所选主题生成图片并弹出保存弹层
+  async function openExport(themeId: string) {
+    setShareTheme(themeId)
     setExportOpen(true)
     setExportPng(null)
     setExportLoading(true)
     try {
-      const png = await svgToPngDataUrl(buildTodoSvg(), 2)
+      const png = await svgToPngDataUrl(buildTodoSvg(themeId), { scale: 2, bgUrl: getShareTheme(themeId).bg })
       setExportPng(png)
     } catch {
       setExportOpen(false)
@@ -356,7 +362,7 @@ const Todo: React.FC = () => {
             清除已完成
           </button>
         )}
-        <button onClick={openExport} className="btn-press shrink-0 px-3 py-2 rounded-xl text-xs text-mint-700 border border-mint-100 bg-white hover:bg-mint-50">
+        <button onClick={() => openExport(shareTheme)} className="btn-press shrink-0 px-3 py-2 rounded-xl text-xs text-mint-700 border border-mint-100 bg-white hover:bg-mint-50">
           导出
         </button>
       </div>
@@ -469,7 +475,7 @@ const Todo: React.FC = () => {
           onClick={() => setExportOpen(false)}
         >
           <div
-            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up"
+            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {exportLoading || !exportPng ? (
@@ -480,6 +486,7 @@ const Todo: React.FC = () => {
             ) : (
               <>
                 <img src={exportPng} alt="待办分享图" className="w-full rounded-xl border border-mint-100" />
+                <ShareThemePicker value={shareTheme} onChange={openExport} />
                 <p className="mt-2.5 text-[11px] text-mint-700/70 text-center leading-5">
                   📱 手机：长按图片 →「保存到相册」<br />
                   💻 电脑：点击下方按钮下载
