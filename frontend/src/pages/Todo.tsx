@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { storage } from '@/utils/storage'
+import { svgToPngDataUrl, shareImageFile, escXml } from '@/utils/shareImage'
 
 export interface TodoItem {
   id: string
@@ -52,6 +53,10 @@ const Todo: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editText, setEditText] = useState('')
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
+  const [exportCopied, setExportCopied] = useState(false)
+  const [exportPng, setExportPng] = useState<string | null>(null)
+  const [exportLoading, setExportLoading] = useState(false)
 
   useEffect(() => { storage.set(STORAGE_KEY, todos) }, [todos])
 
@@ -123,22 +128,160 @@ const Todo: React.FC = () => {
     if (!confirm('确认清除所有已完成的待办吗？')) return
     setTodos((arr) => arr.filter(t => !t.done))
   }
-  function exportText() {
+  function buildExportText(): string {
     const lines = todos.slice()
       .sort((a,b) => Number(a.done) - Number(b.done) || b.createdAt - a.createdAt)
       .map((t, i) => `${i+1}. [${t.done?'✓':' '}] ${t.star?'⭐ ':''}${t.text}${t.dueAt?`  ·  ${fmtDate(t.dueAt)}`:''}`)
       .join('\n')
-    const head = `我的芥菜种子待办清单\n导出时间：${new Date().toLocaleString()}\n完成：${stats.done}/${stats.all}\n\n`
-    const blob = new Blob([head + lines], { type: 'text/plain;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `芥菜种子待办_${new Date().toISOString().slice(0,10)}.txt`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    // 延迟释放，避免浏览器还没开始下载就被回收
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    return `我的芥菜种子待办清单\n导出时间：${new Date().toLocaleString()}\n完成：${stats.done}/${stats.all}\n\n${lines}`
+  }
+
+  // 手机端剪贴板（navigator.clipboard 在微信/旧浏览器不可用时回退 execCommand）
+  async function copyExport() {
+    const text = buildExportText()
+    let ok = false
+    try {
+      await navigator.clipboard.writeText(text)
+      ok = true
+    } catch {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        ok = document.execCommand('copy')
+        ta.remove()
+      } catch { ok = false }
+    }
+    if (ok) {
+      setExportCopied(true)
+      setTimeout(() => setExportCopied(false), 1800)
+    }
+  }
+
+  // 待办分享图：卡片式设计，与金句图风格统一
+  function buildTodoSvg(): string {
+    const W = 800
+    const padX = 56
+    const FONT = "-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+    const list = todos.slice()
+      .sort((a,b) => Number(a.done) - Number(b.done) || Number(b.star) - Number(a.star) || b.createdAt - a.createdAt)
+    const MAX = 15
+    const show = list.slice(0, MAX)
+    const more = list.length - show.length
+
+    const now = new Date()
+    const week = ['日','一','二','三','四','五','六'][now.getDay()]
+    const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 · 星期${week}`
+
+    const wrapChars = (s: string, n: number): string[] => {
+      const out: string[] = []
+      for (let i = 0; i < s.length; i += n) out.push(s.slice(i, i + n))
+      return out.length ? out : ['']
+    }
+
+    const items: string[] = []
+    let y = 96
+
+    items.push(`<text x="${padX}" y="${y}" font-size="32" font-weight="700" fill="#104c37" font-family="${FONT}">🌱 我的待办清单</text>`)
+    y += 48
+    items.push(`<text x="${padX}" y="${y}" font-size="20" fill="#5b9c80" font-family="${FONT}">${escXml(dateStr)}</text>`)
+    y += 42
+
+    // 进度条
+    const barW = W - padX * 2
+    const ratio = stats.all ? stats.done / stats.all : 0
+    items.push(`<rect x="${padX}" y="${y - 16}" width="${barW}" height="14" rx="7" fill="#e3f5ec"/>`)
+    if (ratio > 0) {
+      items.push(`<rect x="${padX}" y="${y - 16}" width="${Math.round(barW * ratio)}" height="14" rx="7" fill="#1a9464"/>`)
+    }
+    y += 32
+    items.push(`<text x="${padX}" y="${y}" font-size="21" font-weight="600" fill="#157652" font-family="${FONT}">已完成 ${stats.done}/${stats.all} · 今日 ${stats.todayDone}/${stats.today}</text>`)
+    y += 44
+
+    if (show.length === 0) {
+      items.push(`<text x="${W/2}" y="${y + 30}" text-anchor="middle" font-size="24" fill="#8aa89a" font-family="${FONT}">今天还没有待办，添加一件小事开始吧 🌱</text>`)
+      y += 90
+    }
+
+    show.forEach((t) => {
+      const cy = y - 8
+      if (t.done) {
+        items.push(`<circle cx="${padX + 13}" cy="${cy}" r="13" fill="#1a9464"/>`)
+        items.push(`<path d="M ${padX + 7} ${cy + 1} l 4 4 l 8 -9" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`)
+      } else {
+        items.push(`<circle cx="${padX + 13}" cy="${cy}" r="13" fill="none" stroke="#9fd8c0" stroke-width="3"/>`)
+      }
+      const textX = padX + 44
+      const lines = wrapChars((t.star ? '⭐ ' : '') + t.text, 21)
+      const fill = t.done ? '#a3bcaf' : '#0f3d2e'
+      lines.forEach((ln, i) => {
+        items.push(`<text x="${textX}" y="${y}" font-size="25" font-weight="500" fill="${fill}" font-family="${FONT}">${escXml(ln)}</text>`)
+        if (i === 0 && t.done) {
+          const lw = Math.min(ln.length * 25, W - padX - textX - 80)
+          items.push(`<line x1="${textX}" y1="${y - 9}" x2="${textX + lw}" y2="${y - 9}" stroke="#a3bcaf" stroke-width="2.5" stroke-linecap="round"/>`)
+        }
+        y += 36
+      })
+      if (t.dueAt) {
+        items.push(`<text x="${textX}" y="${y}" font-size="18" fill="#8aa89a" font-family="${FONT}">📅 ${escXml(fmtDate(t.dueAt))}</text>`)
+        y += 30
+      }
+      y += 16
+    })
+
+    if (more > 0) {
+      items.push(`<text x="${padX + 44}" y="${y}" font-size="20" fill="#8aa89a" font-family="${FONT}">… 还有 ${more} 条待办</text>`)
+      y += 44
+    }
+
+    const height = Math.max(480, y + 80)
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${height}" viewBox="0 0 ${W} ${height}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#effbf6"/>
+      <stop offset="55%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d9f5e8"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4fc494"/>
+      <stop offset="100%" stop-color="#157652"/>
+    </linearGradient>
+  </defs>
+  <rect width="${W}" height="${height}" fill="url(#bg)"/>
+  <g opacity="0.35" transform="translate(680, -40) rotate(20)">
+    <path d="M0 0 C 80 40 80 160 0 200 C -30 160 -30 40 0 0 Z" fill="url(#leaf)"/>
+  </g>
+  <g opacity="0.3" transform="translate(-60, ${height - 120}) rotate(-18)">
+    <path d="M0 0 C 90 50 90 180 0 220 C -40 180 -40 50 0 0 Z" fill="url(#leaf)"/>
+  </g>
+  ${items.join('\n  ')}
+  <text x="${W - padX}" y="${height - 30}" text-anchor="end" font-size="17" fill="#7fb8a0" font-family="${FONT}">🌱 芥菜种子 · mustardseed</text>
+</svg>`
+  }
+
+  // 点击「导出」：生成图片并弹出保存弹层
+  async function openExport() {
+    setExportOpen(true)
+    setExportPng(null)
+    setExportLoading(true)
+    try {
+      const png = await svgToPngDataUrl(buildTodoSvg(), 2)
+      setExportPng(png)
+    } catch {
+      setExportOpen(false)
+    } finally {
+      setExportLoading(false)
+    }
+  }
+
+  async function shareTodoImage() {
+    if (exportPng) await shareImageFile(exportPng, '芥菜种子待办.png', '我的芥菜种子待办清单')
   }
 
   return (
@@ -213,7 +356,7 @@ const Todo: React.FC = () => {
             清除已完成
           </button>
         )}
-        <button onClick={exportText} className="btn-press shrink-0 px-3 py-2 rounded-xl text-xs text-mint-700 border border-mint-100 bg-white hover:bg-mint-50">
+        <button onClick={openExport} className="btn-press shrink-0 px-3 py-2 rounded-xl text-xs text-mint-700 border border-mint-100 bg-white hover:bg-mint-50">
           导出
         </button>
       </div>
@@ -318,6 +461,63 @@ const Todo: React.FC = () => {
           )
         })}
       </div>
+
+      {/* 导出图片弹层：手机长按存相册 / 系统分享 / 桌面下载，另附文字复制 */}
+      {exportOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setExportOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-3.5 w-full max-w-xs shadow-soft animate-fade-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {exportLoading || !exportPng ? (
+              <div className="py-16 text-center text-mint-700/70 text-sm">
+                <div className="text-2xl mb-2 animate-pulse">🌱</div>
+                正在生成分享图…
+              </div>
+            ) : (
+              <>
+                <img src={exportPng} alt="待办分享图" className="w-full rounded-xl border border-mint-100" />
+                <p className="mt-2.5 text-[11px] text-mint-700/70 text-center leading-5">
+                  📱 手机：长按图片 →「保存到相册」<br />
+                  💻 电脑：点击下方按钮下载
+                </p>
+                <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                  <a
+                    href={exportPng}
+                    download={`芥菜种子待办_${new Date().toISOString().slice(0,10)}.png`}
+                    className="btn-press px-3.5 py-2 rounded-xl bg-gradient-to-br from-mint-500 to-mint-700 text-white text-xs font-semibold border border-mint-600 shadow-soft"
+                  >
+                    ⬇️ 下载图片
+                  </a>
+                  {typeof navigator !== 'undefined' && typeof navigator.canShare === 'function' && (
+                    <button
+                      onClick={shareTodoImage}
+                      className="btn-press px-3.5 py-2 rounded-xl bg-mint-50 border border-mint-200 text-mint-700 text-xs font-semibold"
+                    >
+                      📤 分享 / 保存
+                    </button>
+                  )}
+                  <button
+                    onClick={copyExport}
+                    className="btn-press px-3.5 py-2 rounded-xl bg-white border border-mint-200 text-mint-700 text-xs font-semibold"
+                  >
+                    {exportCopied ? '✓ 已复制' : '📋 复制文字'}
+                  </button>
+                  <button
+                    onClick={() => setExportOpen(false)}
+                    className="btn-press px-3 py-2 rounded-xl text-mint-600 text-xs"
+                  >
+                    关闭
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

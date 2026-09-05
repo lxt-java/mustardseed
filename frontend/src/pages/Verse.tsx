@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { TAGS_CN, VERSES, type Verse } from '@/data/verses'
 import { storage } from '@/utils/storage'
+import { svgToPngDataUrl, shareImageFile, escXml } from '@/utils/shareImage'
 
 const FAV_KEY = 'mint.verse.fav.v1'
 
@@ -82,22 +83,65 @@ const Verse: React.FC = () => {
     )
   }
 
+  // 生成金句分享图 SVG：排版与页面卡片一致（标签 / 中文大字 / 出处 / 分隔线 / 英文斜体）
   function buildShareSvg(): string {
     if (!current) return ''
-    // Generate a simple SVG data URL with verse text, then download as .svg
-    const zhLines = wrap(current.zh, 26)
-    const enLines = wrap(current.en, 60)
-    const padLR = 40
-    const lineH = 30
-    const lineHEn = 22
-    let y = 120
-    const zhBlock = zhLines.map(l => `<text x="${padLR}" y="${y}">${l}</text>`).join('\n') || ''
-    y += zhLines.length * lineH + 26
-    const enBlock = enLines.map(l => `<text x="${padLR}" y="${y}">${l}</text>`).join('\n') || ''
-    y += enLines.length * lineHEn + 34
-    const height = Math.max(500, y + 70)
-    const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="800" height="${height}" viewBox="0 0 800 ${height}">
+    const W = 800
+    const padX = 56
+    const FONT_SANS = "-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+    const FONT_SERIF = "Georgia, 'Times New Roman', serif"
+
+    // 字号比页面卡片略大，适合手机全屏查看与社交分享
+    const ZH_SIZE = 33
+    const ZH_LINE_H = 56
+    const EN_SIZE = 21
+    const EN_LINE_H = 38
+
+    const zhLines = wrap(current.zh, 19)
+    const enLines = dualLang ? wrap(current.en, 54) : []
+    const tagMeta = current.tag ? TAGS_CN[current.tag] : null
+    const tagLabel = tagMeta ? `${tagMeta.icon ?? ''} ${tagMeta.label ?? ''}`.trim() : ''
+
+    const items: string[] = []
+    let y = 86
+
+    // 标题
+    items.push(`<text x="${padX}" y="${y}" font-size="30" font-weight="700" fill="#104c37" font-family="${FONT_SANS}">✨ 治愈金句</text>`)
+    y += 58
+
+    // 主题标签（与页面卡片一致）
+    if (tagLabel) {
+      items.push(`<text x="${padX}" y="${y}" font-size="21" font-weight="600" letter-spacing="3" fill="#2f9e74" font-family="${FONT_SANS}">${escXml(tagLabel)}</text>`)
+      y += 48
+    }
+
+    // 中文正文（逐行递增 y，避免重叠）
+    zhLines.forEach((l) => {
+      items.push(`<text x="${padX}" y="${y}" font-size="${ZH_SIZE}" font-weight="500" fill="#0f3d2e" font-family="${FONT_SANS}">${escXml(l)}</text>`)
+      y += ZH_LINE_H
+    })
+    y += 12
+
+    // 中文出处（右对齐）
+    items.push(`<text x="${W - padX}" y="${y}" text-anchor="end" font-size="23" font-weight="600" fill="#157652" font-family="${FONT_SANS}">—— ${escXml(current.ref)}</text>`)
+    y += 46
+
+    // 英文部分（斜体衬线，与页面一致）
+    if (enLines.length) {
+      items.push(`<line x1="${padX}" y1="${y - 28}" x2="${padX + 96}" y2="${y - 28}" stroke="#9fd8c0" stroke-width="3" stroke-linecap="round"/>`)
+      enLines.forEach((l) => {
+        items.push(`<text x="${padX}" y="${y}" font-size="${EN_SIZE}" font-style="italic" fill="#3f7a63" font-family="${FONT_SERIF}">${escXml(l)}</text>`)
+        y += EN_LINE_H
+      })
+      y += 10
+      items.push(`<text x="${W - padX}" y="${y}" text-anchor="end" font-size="19" fill="#5b9c80" font-family="${FONT_SERIF}">— ${escXml(current.refEn)}</text>`)
+      y += 44
+    }
+
+    const height = Math.max(580, y + 66)
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${height}" viewBox="0 0 ${W} ${height}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#effbf6"/>
@@ -109,57 +153,16 @@ const Verse: React.FC = () => {
       <stop offset="100%" stop-color="#157652"/>
     </linearGradient>
   </defs>
-  <rect width="800" height="${height}" fill="url(#bg)"/>
+  <rect width="${W}" height="${height}" fill="url(#bg)"/>
   <g opacity="0.35" transform="translate(680, -40) rotate(20)">
     <path d="M0 0 C 80 40 80 160 0 200 C -30 160 -30 40 0 0 Z" fill="url(#leaf)"/>
   </g>
   <g opacity="0.3" transform="translate(-60, ${height - 120}) rotate(-18)">
     <path d="M0 0 C 90 50 90 180 0 220 C -40 180 -40 50 0 0 Z" fill="url(#leaf)"/>
   </g>
-  <g>
-    <text x="${padLR}" y="76" font-size="28" fill="#104c37" font-weight="700" font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif">✨ 治愈金句</text>
-  </g>
-  <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif" fill="#104c37" font-size="20" font-weight="500">
-    ${zhBlock}
-  </g>
-  <g font-family="Georgia, 'Times New Roman', serif" fill="#157652" font-size="14" fill-opacity="0.88">
-    ${enBlock}
-  </g>
-  <g font-family="-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif">
-    <text x="${padLR}" y="${height - 40}" font-size="14" fill="#157652" font-weight="600">—— ${current.ref}</text>
-    <text x="795" y="${height - 40}" text-anchor="end" font-size="12" fill="#157652" fill-opacity="0.7">— ${current.refEn}</text>
-    <text x="795" y="${height - 18}" text-anchor="end" font-size="11" fill="#157652" fill-opacity="0.55">🌱 芥菜种子 · mustardseed</text>
-  </g>
+  ${items.join('\n  ')}
+  <text x="${W - padX}" y="${height - 30}" text-anchor="end" font-size="17" fill="#7fb8a0" font-family="${FONT_SANS}">🌱 芥菜种子 · mustardseed</text>
 </svg>`
-    return svg
-  }
-
-  // SVG 字符串 → PNG dataURL（供长按保存 / 分享 / 下载）
-  function svgToPngDataUrl(svg: string, scale = 2): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
-      const url = URL.createObjectURL(blob)
-      const img = new Image()
-      img.onload = () => {
-        try {
-          const w = (img.naturalWidth || 800) * scale
-          const h = (img.naturalHeight || 600) * scale
-          const c = document.createElement('canvas')
-          c.width = w
-          c.height = h
-          const ctx = c.getContext('2d')
-          if (!ctx) throw new Error('canvas 2d 不可用')
-          ctx.drawImage(img, 0, 0, w, h)
-          URL.revokeObjectURL(url)
-          resolve(c.toDataURL('image/png'))
-        } catch (e) {
-          URL.revokeObjectURL(url)
-          reject(e)
-        }
-      }
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG 渲染失败')) }
-      img.src = url
-    })
   }
 
   // 点击「导出图片」：转 PNG 后弹出保存弹层
@@ -185,14 +188,7 @@ const Verse: React.FC = () => {
 
   // 系统分享面板（iOS/Android 可直接「存储图像」进相册）
   async function sharePngFile() {
-    if (!sharePng) return
-    try {
-      const blob = await (await fetch(sharePng)).blob()
-      const file = new File([blob], '芥菜种子金句.png', { type: 'image/png' })
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: '芥菜种子 · 治愈金句' })
-      }
-    } catch { /* 用户取消分享会抛 AbortError，忽略 */ }
+    if (sharePng) await shareImageFile(sharePng, '芥菜种子金句.png', '芥菜种子 · 治愈金句')
   }
 
   return (
