@@ -9,7 +9,7 @@
  *
  * 留空 = 不加载统计脚本，所有埋点自动静默，站点功能不受影响。
  */
-const BAIDU_TONGJI_ID = ''
+const BAIDU_TONGJI_ID = 'e9ddc225e7ce3cb581efe7e520fc4de2'
 
 declare global {
   interface Window { _hmt: Array<(string | boolean)[]> | undefined }
